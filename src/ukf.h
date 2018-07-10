@@ -22,6 +22,15 @@ public:
   ///* if this is false, radar measurements will be ignored (except for init)
   bool use_radar_;
 
+  ///* State dimension
+  int n_x_;
+
+  ///* Augmented state dimension
+  int n_aug_;
+
+  ///* Sigma point spreading parameter
+  double lambda_;
+
   ///* state vector: [pos1 pos2 vel_abs yaw_angle yaw_rate] in SI units and rad
   VectorXd x_;
 
@@ -30,6 +39,9 @@ public:
 
   ///* predicted sigma points matrix
   MatrixXd Xsig_pred_;
+
+  ///* augmented sigma points matrix
+  MatrixXd Xsig_aug_;
 
   ///* time when the state is true, in us
   long long time_us_;
@@ -58,15 +70,11 @@ public:
   ///* Weights of sigma points
   VectorXd weights_;
 
-  ///* State dimension
-  int n_x_;
+  // the current NIS for radar
+  double NIS_radar_;
 
-  ///* Augmented state dimension
-  int n_aug_;
-
-  ///* Sigma point spreading parameter
-  double lambda_;
-
+  // the current NIS for laser
+  double NIS_laser_;
 
   /**
    * Constructor
@@ -82,6 +90,9 @@ public:
    * ProcessMeasurement
    * @param meas_package The latest measurement data of either radar or laser
    */
+
+  void Init(MeasurementPackage meas_package);
+
   void ProcessMeasurement(MeasurementPackage meas_package);
 
   /**
@@ -89,7 +100,19 @@ public:
    * matrix
    * @param delta_t Time between k and k+1 in s
    */
+  void GenerateSigmaPoints();
+
+  void AugmentedSigmaPoints();
+
+  void SigmaPointPrediction(double delta_t);
+
+  void PredictMeanAndCovariance();
+
   void Prediction(double delta_t);
+
+  void PredictMeasurement(int n_z, const MatrixXd &Zsig, MatrixXd &R, VectorXd &z_pred, MatrixXd &S);
+
+  void UpdateState(int n_z, const VectorXd &z, const VectorXd &z_pred, const MatrixXd &S, const MatrixXd &Zsig);
 
   /**
    * Updates the state and the state covariance matrix using a laser measurement
